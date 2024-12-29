@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gemara Navigator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      text-align: center;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 10px;
+      margin: 20px 0;
+    }
+  .button {
+    padding: 15px;
+    font-size: 16px;
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  .button:hover {
+    background-color: #007bff;
+    color: white;
+  }
+  .selected {
+    background-color: #007bff;
+    color: white;
+    font-weight: bold;
+    border-color: #0056b3;
+  }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Gemara Navigator</h1>
+    <div id="seder-container" class="grid">
+      <!-- Seder Buttons -->
+      <button class="button" onclick="selectSeder('Zeraim')">Zeraim</button>
+      <button class="button" onclick="selectSeder('Moed')">Moed</button>
+      <button class="button" onclick="selectSeder('Nashim')">Nashim</button>
+      <button class="button" onclick="selectSeder('Nezikin')">Nezikin</button>
+      <button class="button" onclick="selectSeder('Kodashim')">Kodashim</button>
+      <button class="button" onclick="selectSeder('Taharos')">Taharos</button>
+    </div>
+
+    <div id="maseches-container" class="grid hidden"></div>
+    <div id="daf-container" class="grid hidden"></div>
+    <div id="interface-container" class="grid hidden">
+      <button class="button" onclick="redirectTo('Sefaria')">Sefaria</button>
+      <button class="button" onclick="redirectTo('Torat Emet')">Torat Emet</button>
+      <button class="button" onclick="redirectTo('Shas Vilna')">Shas Vilna</button>
+      <button class="button" onclick="redirectTo('Dafyomi Outline')">Dafyomi Outline</button>
+    </div>
+  </div>
+
+  <script>
+    // Masechtot per Seder
+const masechtot = {
+  Zeraim: [
+    { title: 'Berachot', dapim: 64 }
+  ],
+  Moed: [
+    { title: 'Shabbat', dapim: 157 },
+    { title: 'Eruvin', dapim: 105 },
+    { title: 'Pesachim', dapim: 121 },
+    { title: 'Shekalim', dapim: 22 },
+    { title: 'Yoma', dapim: 88 },
+    { title: 'Sukkah', dapim: 56 },
+    { title: 'Beitzah', dapim: 40 },
+    { title: 'Rosh Hashanah', dapim: 35 },
+    { title: 'Taanit', dapim: 31 },
+    { title: 'Megillah', dapim: 32 },
+    { title: 'Moed Katan', dapim: 29 },
+    { title: 'Chagigah', dapim: 27 }
+  ],
+  Nashim: [
+    { title: 'Yevamot', dapim: 122 },
+    { title: 'Ketubot', dapim: 112 },
+    { title: 'Nedarim', dapim: 91 },
+    { title: 'Nazir', dapim: 66 },
+    { title: 'Sotah', dapim: 49 },
+    { title: 'Gittin', dapim: 90 },
+    { title: 'Kiddushin', dapim: 82 }
+  ],
+  Nezikin: [
+    { title: 'Bava Kama', dapim: 119 },
+    { title: 'Bava Metzia', dapim: 119 },
+    { title: 'Bava Batra', dapim: 176 },
+    { title: 'Sanhedrin', dapim: 113 },
+    { title: 'Makkot', dapim: 24 },
+    { title: 'Shevuot', dapim: 49 },
+    { title: 'Avodah Zarah', dapim: 76 },
+    { title: 'Horayot', dapim: 14 }
+  ],
+  Kodashim: [
+    { title: 'Zevachim', dapim: 120 },
+    { title: 'Menachot', dapim: 110 },
+    { title: 'Chullin', dapim: 142 },
+    { title: 'Bechorot', dapim: 61 },
+    { title: 'Arachin', dapim: 34 },
+    { title: 'Temurah', dapim: 34 },
+    { title: 'Keritot', dapim: 28 },
+    { title: 'Meilah', dapim: 22 },
+    { title: 'Kinim', dapim: 3 },
+    { title: 'Tamid', dapim: 10 },
+    { title: 'Middot', dapim: 4 }
+  ],
+  Taharos: [
+    { title: 'Niddah', dapim: 73 }
+  ]
+};
+
+// Map of masechtot to their Dafyomi Outline shortcodes
+const dafyomiShortcodes = {
+  Berachot: 'br',
+  Shabbat: 'sh',
+  Eruvin: 'ev',
+  Pesachim: 'ps',
+  Shekalim: 'sk',
+  Yoma: 'yo',
+  Sukkah: 'su',
+  Beitzah: 'bt',
+  Rosh_Hashanah: 'rh',
+  Taanit: 'tn',
+  Megillah: 'mg',
+  Moed_Katan: 'mo',
+  Chagigah: 'cg',
+  Yevamot: 'ye',
+  Ketubot: 'ks',
+  Nedarim: 'nd',
+  Nazir: 'nz',
+  Sotah: 'so',
+  Gittin: 'gi',
+  Kiddushin: 'kd',
+  Bava_Kama: 'bk',
+  Bava_Metzia: 'bm',
+  Bava_Batra: 'bb',
+  Sanhedrin: 'sn',
+  Makkot: 'ma',
+  Shevuot: 'sv',
+  Avodah_Zarah: 'az',
+  Eduyot: 'ed',
+  Avot: 'av',
+  Horayot: 'ho',
+  Zevachim: 'zv',
+  Menachot: 'mn',
+  Chullin: 'ch',
+  Bechorot: 'be',
+  Arachin: 'er',
+  Temurah: 'tm',
+  Keritot: 'kr',
+  Meilah: 'ml',
+  Tamid: 'ml',
+  Middot: 'ml',
+  Kinim: 'ml',
+  Niddah: 'ni'
+};
+
+// Map of masechtot to alternative names used in Dafyomi Outline URLs
+const dafyomiAltNames = {
+  Berachot: 'berachos',
+  Shabbat: 'shabbos',
+  Taanit: 'taanis',
+  Sukkah: 'sukah',
+  "Rosh Hashanah": 'rhashanah',
+  "Moed Katan": 'mkatan',
+  Megillah: 'megilah',
+  Gittin: 'gitin',
+  Yevamot: 'yevamos',
+  Ketubot: 'kesuvos',
+  "Bava Kama": 'bkama',
+  "Bava Metzia": 'bmetzia',
+  "Bava Batra": 'bbasra',
+  "Avodah Zarah": 'azarah',
+  Kiddushin: 'kidushin',
+  Makkot: 'makos',
+  Shevuot: 'shevuos',
+  Horayot: 'horayos',
+  Menachot: 'menachos',
+  Bechorot: 'bechoros',
+  Arachin: 'erchin',
+  Chullin: 'chulin',
+  Keritot: 'kerisus',
+  Middot: 'midos',
+  Niddah: 'nidah'
+};
+
+const toratEmetIDs = {
+  Berachot: '00841',
+  Shabbat: '00844',
+  Eruvin: '00847',
+  Pesachim: '00908',
+  Shekalim: '00850',
+  Yoma: '00853',
+  Sukkah: '00875',
+  Beitzah: '00859',
+  "Rosh Hashanah": '01106',
+  Taanit: '00888',
+  Megillah: '00862',
+  Moed_Katan: '00892',
+  Chagigah: '01136',
+  Yevamot: '00868',
+  Ketubot: '00920',
+  Nedarim: '00895',
+  Nazir: '00903',
+  Sotah: '00928',
+  Gittin: '00934',
+  Kiddushin: '00899',
+  "Bava Kama": '00997',
+  "Bava Metzia": '00959',
+  "Bava Batra": '00948',
+  Sanhedrin: '01003',
+  Makkot: '01007',
+  Shevuot: '01014',
+  "Avodah Zarah": '01022',
+  Horayot: '01027',
+  Zevachim: '01030',
+  Menachot: '01040',
+  Chullin: '01045',
+  Bechorot: '01132',
+  Arachin: '01060',
+  Temurah: '01035',
+  Keritot: '01121',
+  Meilah: '01117',
+  Tamid: '01378',
+  Niddah: '01056'
+};
+
+// Template for Shas Vilna masechet IDs
+const shasVilnaBaseID = 283; // Base ID for Berachot
+
+// Define custom daf ranges for masechtot with exceptional handling
+const customShasVilnaRanges = {
+  Kinim: { startAmud: 43, masechetOffset: 36 }, // 283 + 36 = 319
+  Tamid: { startAmud: 50, masechetOffset: 37 }, // 283 + 37 = 320
+  Middot: { startAmud: 67, masechetOffset: 38 } // 283 + 38 = 321
+};
+
+const customDafRanges = {
+  Kinim: { start: 22, end: 25 },
+  Tamid: { start: 25, end: 33 },
+  Middot: { start: 34, end: 37 }
+};
+
+// Function to calculate the Shas Vilna URL
+function getShasVilnaURL(maseches, daf) {
+  const masechesIndex = Object.keys(toratEmetIDs).indexOf(maseches); // Find index of the maseches
+
+  if (customShasVilnaRanges[maseches]) {
+    // Handle exceptions for Kinim, Tamid, Middot
+
+    const { start, end } = customDafRanges[maseches]; 
+    const { startAmud, masechetOffset } = customShasVilnaRanges[maseches];
+    const massechet = shasVilnaBaseID + masechetOffset; // Calculate custom massechet ID
+    const amud = startAmud + (daf - start) * 2; // Custom amud numbering
+    //const amud=startAmud;
+    return `https://daf-yomi.com/Dafyomi_Page.aspx?vt=1&massechet=${massechet}&amud=${amud}&fs=0`;
+  }
+
+  if (masechesIndex === -1) {
+    alert(`Shas Vilna ID not found for ${maseches}. Please check the maseches list.`);
+    return null;
+  }
+
+  // Default handling for masechtot
+  const massechet = shasVilnaBaseID + masechesIndex; // Calculate massechet ID
+  const amud = (daf - 2) * 2 + 3; // Default amud calculation
+  return `https://daf-yomi.com/Dafyomi_Page.aspx?vt=1&massechet=${massechet}&amud=${amud}&fs=0`;
+}
+
+    // Generate Daf buttons
+    function generateDafButtons(dafCount) {
+      const dafs = [];
+      for (let i = 2; i <= dafCount; i++) {
+        dafs.push(`<button class="button" onclick="selectDaf(${i})">Daf ${i}</button>`);
+      }
+      return dafs.join('');
+    }
+
+function setSelected(buttonGroup, clickedButton) {
+  // Remove 'selected' class from all buttons in the group
+  buttonGroup.querySelectorAll('.button').forEach(button => button.classList.remove('selected'));
+  
+  // Add 'selected' class to the clicked button
+  clickedButton.classList.add('selected');
+}
+// Show Masechtot for selected Seder
+function selectSeder(seder) {
+  const masechesContainer = document.getElementById('maseches-container');
+  masechesContainer.innerHTML = '';
+    
+  // Highlight the selected Seder button
+  setSelected(document.getElementById('seder-container'), event.target);
+  
+  masechtot[seder].forEach(maseches => {
+    const button = document.createElement('button');
+    button.className = 'button';
+    button.textContent = `${maseches.title}`;
+    button.onclick = () => selectMaseches(maseches);
+    masechesContainer.appendChild(button);
+  });
+  masechesContainer.classList.remove('hidden');
+  document.getElementById('daf-container').classList.add('hidden');
+  document.getElementById('interface-container').classList.add('hidden');
+}
+
+// Show Daf buttons for selected Maseches
+function selectMaseches(maseches) {
+  const dafContainer = document.getElementById('daf-container');
+  dafContainer.innerHTML = '';
+
+  // Highlight the selected Maseches button
+  setSelected(document.getElementById('maseches-container'), event.target);
+
+  // Determine the daf range
+  const { start, end } = customDafRanges[maseches.title] || { start: 2, end: maseches.dapim };
+
+  for (let i = start; i <= end; i++) {
+    const button = document.createElement('button');
+    button.className = 'button';
+    button.textContent = `Daf ${i}`;
+    button.onclick = () => selectDaf(maseches.title, i);
+    dafContainer.appendChild(button);
+  }
+  dafContainer.classList.remove('hidden');
+  document.getElementById('interface-container').classList.add('hidden');
+}
+
+// Show Interface selection
+function selectDaf(maseches, daf) {
+  const interfaceContainer = document.getElementById('interface-container');
+
+  // Highlight the selected Daf button
+  setSelected(document.getElementById('daf-container'), event.target);
+  
+  interfaceContainer.classList.remove('hidden');
+  interfaceContainer.querySelectorAll('.button').forEach(button => {
+    button.onclick = () => redirectTo(button.textContent, maseches, daf);
+  });
+}
+
+// Helper function to calculate the Torat Emet anchor link for a given daf
+function getToratEmetAnchor(daf) {
+  const offset = (daf - 2) * 2; // Calculate the zero-based offset for "a" pages
+  return `HtmpReportNum${String(offset).padStart(4, '0')}_L2`;
+}
+
+// Redirect to selected Interface
+function redirectTo(interface, maseches, daf) {
+  let url = '';
+  switch (interface) {
+    case 'Sefaria':
+      const dafLetter = "a";
+      url = `https://www.sefaria.org/${maseches}.${daf}${dafLetter}`;
+      break;
+    case 'Torat Emet':
+      // Generate Torat Emet URL
+      const toratEmetID = toratEmetIDs[maseches];
+      if (!toratEmetID) {
+        alert(`Torat Emet ID not found for ${maseches}. Please update the mapping.`);
+        return;
+      }
+      const anchor = getToratEmetAnchor(daf);
+      url = `http://www.toratemetfreeware.com/online/f_${toratEmetID}.html#${anchor}`;
+      break;
+    case 'Shas Vilna':
+      url = getShasVilnaURL(maseches, daf);
+      if (!url) return; // If null, exit
+      break;
+    case 'Dafyomi Outline':
+      // Check for alternative name
+      const altName = dafyomiAltNames[maseches] || maseches.toLowerCase();
+      const shortcode = dafyomiShortcodes[maseches.replace(' ', '_')];
+      if (!shortcode) {
+        alert('Shortcode not found for this maseches.');
+        return;
+      }
+      url = `https://dafyomi.co.il/${altName}/points/${shortcode}-ps-${String(daf).padStart(3, '0')}.htm`;
+      break;
+    default:
+      alert('Invalid interface selected.');
+      return;
+  }
+  window.open(url, '_blank');
+}
+  </script>
+</body>
+</html>
+
