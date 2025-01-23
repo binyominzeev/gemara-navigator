@@ -60,6 +60,7 @@
     <div id="maseches-container" class="grid hidden"></div>
     <div id="daf-container" class="grid hidden"></div>
     <div id="interface-container" class="grid hidden">
+      <button class="button" onclick="redirectTo('TorahApp')">TorahApp</button>
       <button class="button" onclick="redirectTo('Sefaria')">Sefaria</button>
       <button class="button" onclick="redirectTo('Torat Emet')">Torat Emet</button>
       <button class="button" onclick="redirectTo('Shas Vilna')">Shas Vilna</button>
@@ -366,6 +367,10 @@ function redirectTo(interface, maseches, daf) {
     case 'Sefaria':
       const dafLetter = "a";
       url = `https://www.sefaria.org/${maseches}.${daf}${dafLetter}`;
+      break;
+    case 'TorahApp':
+      const daftLetter = "a";
+      url = `https://torahapp.org/share/book/${maseches}/r/${daf}${daftLetter}`;
       break;
     case 'Torat Emet':
       // Generate Torat Emet URL
