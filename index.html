@@ -278,6 +278,13 @@ function getShasVilnaURL(maseches, daf) {
     return null;
   }
 
+  // Special case for Niddah - should be 322 instead of 320
+  if (maseches === 'Niddah') {
+    const massechet = 322;
+    const amud = (daf - 2) * 2 + 3; // Default amud calculation
+    return `https://daf-yomi.com/Dafyomi_Page.aspx?vt=1&massechet=${massechet}&amud=${amud}&fs=0`;
+  }
+
   // Default handling for masechtot
   const massechet = shasVilnaBaseID + masechesIndex; // Calculate massechet ID
   const amud = (daf - 2) * 2 + 3; // Default amud calculation
