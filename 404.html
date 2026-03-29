@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Gemara Navigator</title>
+  <script>
+    // GitHub Pages SPA redirect: preserve the path so index.html can restore state.
+    // Stores the original path in sessionStorage, then navigates to the app root.
+    // If the app is deployed to a subdirectory, replace '/' below with the base path.
+    sessionStorage.setItem('redirect', window.location.pathname);
+    window.location.replace('/');
+  </script>
+</head>
+<body></body>
+</html>
