@@ -401,6 +401,65 @@
     // State
     let state = { seder: null, maseches: null, daf: null };
 
+    // --- URL routing helpers ---
+
+    function masechesToURL(title) {
+      return title.replace(/ /g, '_');
+    }
+
+    function urlToMaseches(urlPart) {
+      return urlPart.replace(/_/g, ' ');
+    }
+
+    function getSederForMaseches(title) {
+      for (const [seder, list] of Object.entries(masechtot)) {
+        if (list.some(m => m.title === title)) return seder;
+      }
+      return null;
+    }
+
+    function restoreFromPath(path) {
+      const parts = path.split('/').filter(Boolean);
+      if (parts.length === 0) return;
+
+      const masechesTitle = urlToMaseches(decodeURIComponent(parts[0]));
+      const daf = parts[1] ? parseInt(parts[1], 10) : null;
+
+      const seder = getSederForMaseches(masechesTitle);
+      if (!seder) return;
+
+      const masechesObj = masechtot[seder].find(m => m.title === masechesTitle);
+      if (!masechesObj) return;
+
+      const sederBtn = Array.from(document.querySelectorAll('#seder-container .button'))
+        .find(b => b.textContent === seder);
+      if (!sederBtn) return;
+      selectSeder(seder, sederBtn, false);
+
+      const masechesBtn = Array.from(document.querySelectorAll('#maseches-container .button'))
+        .find(b => b.textContent === masechesTitle);
+      if (!masechesBtn) return;
+      selectMaseches(masechesObj, masechesBtn, false);
+
+      if (daf !== null && !isNaN(daf)) {
+        const dafBtn = Array.from(document.querySelectorAll('#daf-container .button'))
+          .find(b => parseInt(b.textContent, 10) === daf);
+        if (dafBtn) selectDaf(masechesTitle, daf, dafBtn, false);
+      }
+    }
+
+    window.addEventListener('popstate', () => {
+      state = { seder: null, maseches: null, daf: null };
+      document.querySelectorAll('#seder-container .button').forEach(b => b.classList.remove('selected'));
+      document.getElementById('maseches-section').classList.add('hidden');
+      document.getElementById('daf-section').classList.add('hidden');
+      document.getElementById('interface-section').classList.add('hidden');
+      document.getElementById('breadcrumb').innerHTML = '';
+      restoreFromPath(window.location.pathname);
+    });
+
+    // --- end URL routing helpers ---
+
     function updateBreadcrumb() {
       const bc = document.getElementById('breadcrumb');
       const parts = [];
@@ -421,9 +480,10 @@
       clickedBtn.classList.add('selected');
     }
 
-    function selectSeder(seder, btn) {
+    function selectSeder(seder, btn, updateUrl = true) {
       state = { seder, maseches: null, daf: null };
       updateBreadcrumb();
+      if (updateUrl) history.pushState(null, '', '/');
       setSelected(document.getElementById('seder-container'), btn);
 
       const masechesContainer = document.getElementById('maseches-container');
@@ -445,10 +505,11 @@
       document.getElementById('interface-section').classList.add('hidden');
     }
 
-    function selectMaseches(maseches, btn) {
+    function selectMaseches(maseches, btn, updateUrl = true) {
       state.maseches = maseches.title;
       state.daf = null;
       updateBreadcrumb();
+      if (updateUrl) history.pushState(null, '', `/${masechesToURL(maseches.title)}`);
       setSelected(document.getElementById('maseches-container'), btn);
 
       const dafContainer = document.getElementById('daf-container');
@@ -470,9 +531,10 @@
       document.getElementById('interface-section').classList.add('hidden');
     }
 
-    function selectDaf(maseches, daf, btn) {
+    function selectDaf(maseches, daf, btn, updateUrl = true) {
       state.daf = daf;
       updateBreadcrumb();
+      if (updateUrl) history.pushState(null, '', `/${masechesToURL(maseches)}/${daf}`);
       setSelected(document.getElementById('daf-container'), btn);
 
       const ifContainer = document.getElementById('interface-container');
@@ -533,6 +595,20 @@
       }
       window.open(url, '_blank');
     }
+
+    // Restore selection state from URL on initial page load.
+    // When arriving via the 404.html redirect, the original path is in sessionStorage.
+    document.addEventListener('DOMContentLoaded', () => {
+      const redirectPath = sessionStorage.getItem('redirect');
+      if (redirectPath) {
+        sessionStorage.removeItem('redirect');
+        // Validate: only accept paths that look like /Maseches or /Maseches/Daf
+        if (/^\/[A-Za-z_]+(\/\d+)?$/.test(redirectPath)) {
+          history.replaceState(null, '', redirectPath);
+        }
+      }
+      restoreFromPath(window.location.pathname);
+    });
   </script>
 </body>
 </html>
