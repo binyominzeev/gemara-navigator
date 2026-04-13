@@ -41,6 +41,7 @@
       display: flex;
       align-items: baseline;
       gap: 16px;
+      flex-wrap: wrap;
     }
 
     h1 {
@@ -246,6 +247,21 @@
       animation: fadeUp 220ms ease both;
     }
 
+    .sibling-link {
+      margin-left: auto;
+      font-size: 13px;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+      white-space: nowrap;
+      transition: color var(--transition);
+      align-self: center;
+    }
+
+    .sibling-link:hover {
+      color: var(--accent-hover);
+    }
+
     /* Footer */
     footer {
       margin-top: 52px;
@@ -275,6 +291,7 @@
     <header>
       <h1><a href="/">Gemara Navigator</a></h1>
       <span class="subtitle">Talmud Bavli</span>
+      <a class="sibling-link" href="/tursa">Shulchan Aruch Navigator →</a>
     </header>
 
     <div id="breadcrumb"></div>

@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shulchan Aruch Navigator</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f7f5f0;
+      --surface: #ffffff;
+      --ink: #1a1814;
+      --ink-muted: #7a756c;
+      --accent: #7a2e3c;
+      --accent-light: #f5ebed;
+      --accent-hover: #5a1e2c;
+      --border: #e2ddd6;
+      --radius: 6px;
+      --transition: 180ms ease;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 48px 24px 80px;
+    }
+
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      margin-bottom: 52px;
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      line-height: 1;
+    }
+
+    h1 a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--ink-muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 300;
+    }
+
+    .sibling-link {
+      margin-left: auto;
+      font-size: 13px;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+      white-space: nowrap;
+      transition: color var(--transition);
+      align-self: center;
+    }
+
+    .sibling-link:hover {
+      color: var(--accent-hover);
+    }
+
+    /* Breadcrumb */
+    #breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--ink-muted);
+      margin-bottom: 32px;
+      min-height: 20px;
+      font-weight: 300;
+    }
+
+    #breadcrumb span { color: var(--ink); font-weight: 500; }
+    #breadcrumb .sep { color: var(--border); }
+
+    /* Section labels */
+    .section-label {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      font-weight: 500;
+      margin-bottom: 12px;
+    }
+
+    /* Divider between sections */
+    .section-divider {
+      width: 100%;
+      height: 1px;
+      background: var(--border);
+      margin: 32px 0;
+    }
+
+    /* Button grids */
+    .grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* === CHELEK BUTTONS — pill style, prominent === */
+    #chelek-container .button {
+      font-family: 'DM Serif Display', serif;
+      font-size: 15px;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+      padding: 10px 22px;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 100px;
+      cursor: pointer;
+      color: var(--ink);
+      transition: background var(--transition), border-color var(--transition), color var(--transition), transform var(--transition);
+      white-space: nowrap;
+    }
+
+    #chelek-container .button:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-light);
+      transform: translateY(-1px);
+    }
+
+    #chelek-container .button.selected {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+      font-style: italic;
+    }
+
+    /* === SIMAN BUTTONS — compact number grid === */
+    #siman-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
+      gap: 6px;
+    }
+
+    #siman-container .button {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 400;
+      padding: 9px 4px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      color: var(--ink-muted);
+      transition: background var(--transition), border-color var(--transition), color var(--transition);
+      text-align: center;
+    }
+
+    #siman-container .button:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    #siman-container .button.selected {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+      font-weight: 500;
+    }
+
+    /* === ENDPOINT BUTTONS — full-width action list === */
+    #endpoint-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 8px;
+    }
+
+    #endpoint-container .button {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      color: var(--ink);
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background var(--transition), border-color var(--transition), color var(--transition), transform var(--transition);
+    }
+
+    #endpoint-container .button::before {
+      content: '↗';
+      font-size: 15px;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    #endpoint-container .button:hover {
+      border-color: var(--accent);
+      background: var(--accent-light);
+      color: var(--accent);
+      transform: translateY(-1px);
+    }
+
+    .hidden { display: none !important; }
+
+    /* Fade-in animation */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-in {
+      animation: fadeUp 220ms ease both;
+    }
+
+    /* Footer */
+    footer {
+      margin-top: 52px;
+      padding-top: 32px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--ink-muted);
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+      transition: color var(--transition);
+    }
+
+    footer a:hover {
+      color: var(--accent-hover);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1><a href="/tursa">Shulchan Aruch Navigator</a></h1>
+      <span class="subtitle">Tur &amp; Shulchan Aruch</span>
+      <a class="sibling-link" href="/">← Gemara Navigator</a>
+    </header>
+
+    <div id="breadcrumb"></div>
+
+    <div class="section-label">Chelek</div>
+    <div id="chelek-container" class="grid">
+      <button class="button" data-chelek="Orach Chaim" onclick="selectChelek(this.dataset.chelek, this)">Orach Chaim</button>
+      <button class="button" data-chelek="Yoreh De'ah" onclick="selectChelek(this.dataset.chelek, this)">Yoreh De'ah</button>
+      <button class="button" data-chelek="Even Ha'ezer" onclick="selectChelek(this.dataset.chelek, this)">Even Ha'ezer</button>
+      <button class="button" data-chelek="Choshen Mishpat" onclick="selectChelek(this.dataset.chelek, this)">Choshen Mishpat</button>
+    </div>
+
+    <div id="siman-section" class="hidden">
+      <div class="section-divider"></div>
+      <div class="section-label">Siman</div>
+      <div id="siman-container"></div>
+    </div>
+
+    <div id="endpoint-section" class="hidden">
+      <div class="section-divider"></div>
+      <div class="section-label">Open in</div>
+      <div id="endpoint-container">
+        <button class="button">Tur</button>
+        <button class="button">Shulchan Aruch</button>
+      </div>
+    </div>
+
+    <footer>
+      <a href="https://github.com/binyominzeev/gemara-navigator" target="_blank">GitHub</a>
+      <a href="https://myshiurim.com" target="_blank">Myshiurim.com</a>
+    </footer>
+  </div>
+
+  <script>
+    const samap = {
+      'Orach Chaim':    { key: 'oc', count: 697, ids: [339,342,343,346,348,349,350,351,356,358,360,363,364,366,368,371,371,372,372,373,373,374,374,375,376,380,380,383,384,384,385,385,397,398,400,400,401,401,403,405,406,406,408,410,410,411,414,416,416,416,417,418,418,422,422,425,426,427,429,430,431,432,433,434,435,435,438,438,439,440,441,442,443,444,445,446,447,448,448,449,449,450,450,452,453,453,453,454,455,457,461,461,462,463,464,464,465,465,466,467,467,468,469,469,471,471,472,473,477,477,479,479,480,480,483,483,483,484,485,486,486,486,486,487,490,490,491,492,501,501,502,504,507,507,508,510,511,512,514,515,517,518,518,520,521,521,521,523,524,524,525,526,527,535,538,539,953,953,956,962,966,968,969,970,971,972,976,983,984,986,986,987,987,987,990,991,991,993,996,997,998,999,1000,1002,1004,1004,1005,1005,1008,1009,1010,1010,1012,1014,1014,1015,1016,1018,1018,1019,1020,1021,1025,1026,1029,1030,1032,1032,1036,1038,1039,1042,1044,1044,1044,1045,1047,1048,1049,1051,1051,1052,1052,1053,1054,1055,1055,1056,1056,1056,1057,1057,1059,1060,1060,1062,1063,1063,1063,1064,1065,1419,1420,1422,1425,1427,1430,1431,1433,1436,1436,1437,1441,1445,1448,1448,1448,1450,1451,1452,1453,1454,1455,1459,1461,1462,1465,1467,1468,1469,1469,1475,1477,1479,1480,1481,1483,1484,1485,1486,1487,1487,1489,1489,1491,1492,1492,1493,1494,1495,1495,1496,1497,1497,1498,1498,1500,1501,1504,1507,1507,1516,1518,1521,1522,1525,1528,1534,1542,1544,1545,1549,1550,1552,1556,1559,1563,1565,1573,1576,1580,1584,1585,1588,1589,1594,1596,1596,1602,1602,1604,1606,1606,1606,1612,1613,1615,1616,1617,1619,1622,1622,1623,1624,2075,2077,2078,2079,2079,2080,2080,2081,2082,2082,2083,2084,2085,2086,2087,2088,2088,2089,2091,2098,2099,2101,2103,2104,2105,2105,2107,2107,2110,2110,2111,2112,2112,2113,2113,2113,2114,2115,2117,2118,2118,2118,2119,2119,2120,2120,2120,2120,2121,2122,2122,2122,2123,2123,2125,2126,2126,2126,2127,2127,2127,2129,2129,2129,2130,2132,2132,2132,2132,2133,2133,2133,2136,2136,2137,2137,2137,2137,2139,2140,2140,2140,2141,2142,2144,2146,2146,2148,2149,2152,2154,2154,2157,2158,2159,2161,2163,2164,2170,2172,2174,2177,2179,2188,2194,2194,2197,2206,2208,2211,2211,2215,2216,2218,2218,2221,2222,2225,2227,2228,2228,2229,2230,2241,2243,2243,2244,2245,2247,2251,2252,2254,2254,2255,2255,2256,2256,2257,2257,2258,2259,2259,2259,2261,2261,2264,2265,2265,2265,2267,2825,2826,2827,2831,2837,2838,2841,2844,2846,2848,2849,2850,2853,2856,2856,2858,2860,2860,2863,2865,2869,2874,2874,2875,2879,2880,2880,2880,2880,2880,2881,2881,2884,2889,2889,2890,2890,2891,2891,2892,2892,2892,2892,2895,2895,2897,2897,2898,2898,2899,2899,2901,2902,2903,2905,2905,2906,2912,2914,2915,2918,2918,2919,2919,2920,2922,2923,2924,2927,2927,2927,2929,2930,2930,2934,2934,2934,2935,2935,2935,2936,2937,2938,2938,2938,2938,2939,2942,2943,2944,2945,2946,2952,2952,2954,2955,2958,2960,2960,2961,2961,2961,2962,2963,2963,2963,2964,2964,2965,2965,2966,2967,2969,2971,2972,2972,2972,2973,2975,2977,2978,2979,2980,2980,2982,2983,2983,2984,2985,2986,2987,2987,2990,2990,2991,2994,2998,3000,3001,3003,3004,3005,3005,3007,3008,3013,3015,3015,3015,3016,3017,3019,3021,3021,3026,3030,3030,3036,3037,3037,3037,3037,3038,3038,3040,3040,3040,3041,3041,3042,3043,3043,3044,3044,3045,3046,3046,3049,3051,3053,3054,3055,3056,3058,3058,3058,3058,3059,3060,3060,3061,3062,3062,3064,3065,3068,3070,3072,3073,3074,3075,3076,3078] },
+      'Yoreh De\'ah':   { key: 'yd', count: 403, ids: [3474,3483,3489,3490,3492,3493,3495,3495,3495,3496,3499,3501,3501,3503,3506,3508,3512,3513,3518,3520,3522,3523,3525,3528,3533,3534,3535,3537,3543,3544,3546,3548,3549,3556,3559,3567,3574,3579,3581,3590,3592,3595,3597,3600,3603,3604,3607,3608,3616,3617,3619,3621,3624,3627,3628,3635,3638,3646,3649,3649,3651,3656,3657,3659,4132,4135,4138,4139,4143,4161,4168,4169,4173,4176,4177,4179,4182,4184,4184,4185,4187,4192,4194,4199,4206,4207,4212,4222,4224,4226,4230,4235,4248,4251,4258,4264,4268,4271,4279,4287,4289,4295,4299,4303,4305,4317,4318,4321,4325,4327,4348,4354,4358,4362,4365,4369,4372,4376,4381,4389,4395,4400,4993,5000,5011,5014,5016,5024,5026,5032,5035,5038,5041,5042,5047,5051,5052,5055,5058,5060,5060,5065,5072,5074,5074,5076,5079,5079,5081,5083,5083,5086,5087,5088,5089,5091,5091,5095,5098,5099,5108,5111,5114,5116,5117,5118,5119,5120,5120,5133,5137,5137,5141,5148,5150,5151,5153,5166,5167,5170,5171,5172,5475,5475,5480,5483,5484,5495,5498,5513,5527,5529,5532,5533,5535,5539,5544,5547,5558,5561,5563,5584,6590,6590,6592,6593,6595,6595,6597,6597,6598,6600,6600,6601,6602,6605,6608,6615,6617,6618,6622,6628,6629,6630,6630,6630,6632,6633,6650,6653,6654,6654,6662,6662,6675,6679,6682,6683,6687,6692,6696,6697,6708,6709,6712,6714,6719,6719,6721,6723,6723,6726,6728,6730,6730,6731,6733,6735,6738,6743,6743,6743,6745,6746,6748,6752,6756,6769,6772,6774,6775,6777,6778,6780,6782,6785,6790,6790,6791,6792,6794,6796,6798,6799,6800,6800,6804,6804,6806,6807,6808,6809,6811,6813,6821,6822,6828,6831,6834,6835,6838,6841,6842,6842,6843,6852,6854,6854,6855,6855,6856,6856,6856,6858,6860,6861,6863,6863,6864,6864,6868,6871,6872,6875,6878,6879,6881,6882,6883,6885,6886,6903,6903,6904,6914,6915,6916,6916,6916,6918,6923,6926,6928,6928,6929,6930,6930,6930,6931,6932,6932,6932,6932,6933,6933,6933,6933,6934,6934,6934,6935,6936,6936,6937,6939,6940,6940,6940,6941,6941,6942,6946,6947,6948,6951,6954,6957,6957,6958,6959,6961,6962,6962,6963,6963,6964,6964,6964,6965,6966,6967,6968,6969,6970,6970,6971,6972,6973,6974,6977,6978,6978,6982] },
+      'Even Ha\'ezer':  { key: 'eh', count: 178, ids: [7487,7492,7495,7498,7508,7512,7517,7524,7524,7525,7527,7531,7532,7537,7537,7541,7542,7591,7591,7591,7592,7595,7598,7599,7599,7601,7602,7606,7617,7621,7623,7626,7627,7628,7628,7633,7634,7640,7647,7649,7651,7652,7658,7659,7661,7663,7665,7666,7667,7667,7673,7675,7676,7680,7680,7682,7683,7683,7683,7684,7684,7686,7690,7690,7692,7693,7698,7700,7703,7704,7708,7709,7709,7709,7711,7713,7716,7722,7723,7724,7726,7727,7728,7729,7729,7733,7734,7735,7736,7737,7743,7745,7747,7753,7753,7755,7760,7762,7764,7765,7770,7771,7773,7775,7776,7777,7779,7780,7781,7782,7782,7783,7787,7790,7792,7799,7800,7804,8101,8107,8114,8118,8120,8122,8127,8136,8143,8146,8150,8173,8177,8178,8181,8181,8184,8185,8186,8187,8189,8192,8194,8207,8213,8217,8220,8222,8223,8224,8225,8226,8227,8227,8229,8230,8265,8268,8273,8275,8276,8277,8279,8280,8280,8281,8283,8285,8286,8287,8288,8306,8308,8308,8309,8311,8312,8313,8313,8315] },
+      'Choshen Mishpat':{ key: 'cm', count: 427, ids: [8697,8701,8702,8705,8708,8709,8709,8713,8715,8718,8719,8720,8724,8725,8729,8731,8732,8737,8739,8740,8742,8743,8748,8750,8752,8776,8777,8778,8787,8788,8795,8797,8798,8803,8813,8816,8822,8830,8833,8846,8848,8854,8861,8869,8873,8881,8903,8906,8908,8916,8918,8921,8924,8924,8927,8928,8940,8941,8947,8948,8958,8963,8969,8971,8973,8989,9019,9023,9025,9032,9037,9047,9085,9096,9445,9463,9465,9472,9476,9483,9484,9504,9517,9519,9521,9528,9538,9557,9572,9578,9584,9593,9598,9603,9605,9613,9617,9624,9626,9630,9631,9634,9635,9641,9648,9651,9652,9657,9666,9668,9672,9677,9680,9682,9683,9696,9697,9700,9701,9704,9706,9714,9720,9726,9726,9732,9746,9747,9750,9757,9760,9763,10292,10295,10297,10297,10298,10299,10302,10303,10308,10311,10312,10313,10314,10315,10324,10326,10327,10334,10338,10338,10339,10344,10353,10364,10369,10373,10376,10377,10378,10379,10381,10389,10391,10391,10392,10392,10393,10393,10394,10399,10401,10402,10403,10416,10433,10435,10436,10436,10436,10437,10442,10447,10448,10452,10453,10453,10455,10456,10462,10463,10467,10468,10471,10475,10475,10478,10481,10484,10489,10490,10493,10497,10500,10505,10506,10517,10519,10526,10528,10530,10534,10535,10538,10540,10543,10544,10547,10548,10550,10551,10554,10556,10557,10558,10560,10570,10572,10572,10574,10577,10584,10585,10586,10591,10594,10595,10596,10597,11105,11110,11112,11119,11121,11124,11127,11129,11134,11135,11144,11145,11147,11159,11159,11166,11167,11169,11170,11173,11179,11180,11184,11184,11187,11188,11189,11193,11194,11196,11197,11197,11199,11201,11201,11206,11207,11209,11214,11216,11218,11223,11224,11225,11226,11229,11230,11231,11232,11232,11238,11248,11256,11257,11259,11262,11264,11268,11269,11269,11270,11272,11273,11275,11276,11278,11283,11285,11286,11287,11289,11291,11296,11297,11298,11299,11301,11304,11304,11305,11306,11308,11309,11309,11309,11310,11310,11310,11310,11310,11311,11312,11315,11324,11325,11327,11327,11329,11330,11332,11335,11337,11338,11338,11340,11341,11344,11344,11347,11348,11349,11350,11350,11353,11355,11356,11359,11360,11362,11363,11365,11367,11368,11372,11373,11374,11375,11377,11378,11380,11381,11381,11382,11383,11383,11384,11385,11385,11386,11386,11387,11388,11390,11391,11391,11391,11399,11399,11407,11409,11411,11413,11413,11413,11414,11414,11415,11416,11416,11417,11419,11420,11421,11421,11421,11422,11423,11424,11424,11424,11428,11428,11429,11429,11430,11430,11430,11431,11433,11435,11439,11441,11441,11441,11443,11445,11445] }
+    };
+
+    // State
+    let state = { chelek: null, siman: null };
+
+    // --- URL routing helpers ---
+
+    function chelekToURL(name) {
+      const map = {
+        'Orach Chaim':    'Orach_Chaim',
+        "Yoreh De'ah":    'Yoreh_Deah',
+        "Even Ha'ezer":   'Even_HaEzer',
+        'Choshen Mishpat':'Choshen_Mishpat'
+      };
+      return map[name] || name.replace(/ /g, '_');
+    }
+
+    function urlToChelek(urlPart) {
+      const map = {
+        'Orach_Chaim':    'Orach Chaim',
+        'Yoreh_Deah':     "Yoreh De'ah",
+        'Even_HaEzer':    "Even Ha'ezer",
+        'Choshen_Mishpat':'Choshen Mishpat'
+      };
+      return map[urlPart] || null;
+    }
+
+    function restoreFromPath(path) {
+      // Strip leading /tursa prefix if present
+      const parts = path.replace(/^\/tursa\/?/, '').split('/').filter(Boolean);
+      if (parts.length === 0) return;
+
+      const chelekName = urlToChelek(parts[0]);
+      if (!chelekName || !samap[chelekName]) return;
+
+      const chelekBtn = Array.from(document.querySelectorAll('#chelek-container .button'))
+        .find(b => b.dataset.chelek === chelekName);
+      if (!chelekBtn) return;
+      selectChelek(chelekName, chelekBtn, false);
+
+      if (parts[1]) {
+        const siman = parseInt(parts[1], 10);
+        if (!isNaN(siman) && siman >= 1 && siman <= samap[chelekName].count) {
+          const simanBtn = Array.from(document.querySelectorAll('#siman-container .button'))
+            .find(b => parseInt(b.textContent, 10) === siman);
+          if (simanBtn) selectSiman(chelekName, siman, simanBtn, false);
+        }
+      }
+    }
+
+    window.addEventListener('popstate', () => {
+      state = { chelek: null, siman: null };
+      document.querySelectorAll('#chelek-container .button').forEach(b => b.classList.remove('selected'));
+      document.getElementById('siman-section').classList.add('hidden');
+      document.getElementById('endpoint-section').classList.add('hidden');
+      document.getElementById('breadcrumb').innerHTML = '';
+      restoreFromPath(window.location.pathname);
+    });
+
+    // --- end URL routing helpers ---
+
+    function updateBreadcrumb() {
+      const bc = document.getElementById('breadcrumb');
+      const parts = [];
+      if (state.chelek) parts.push(`<span>${state.chelek}</span>`);
+      if (state.siman) { parts.push('<span class="sep">›</span>'); parts.push(`<span>Siman ${state.siman}</span>`); }
+      bc.innerHTML = parts.join(' ');
+    }
+
+    function animateSection(el) {
+      el.classList.remove('animate-in');
+      void el.offsetWidth;
+      el.classList.add('animate-in');
+    }
+
+    function setSelected(container, clickedBtn) {
+      container.querySelectorAll('.button').forEach(b => b.classList.remove('selected'));
+      clickedBtn.classList.add('selected');
+    }
+
+    function selectChelek(chelek, btn, updateUrl = true) {
+      state = { chelek, siman: null };
+      updateBreadcrumb();
+      if (updateUrl) history.pushState(null, '', '/tursa');
+      setSelected(document.getElementById('chelek-container'), btn);
+
+      const simanContainer = document.getElementById('siman-container');
+      simanContainer.innerHTML = '';
+
+      const count = samap[chelek].count;
+      for (let i = 1; i <= count; i++) {
+        const b = document.createElement('button');
+        b.className = 'button';
+        b.textContent = `${i}`;
+        b.onclick = () => selectSiman(chelek, i, b);
+        simanContainer.appendChild(b);
+      }
+
+      const sec = document.getElementById('siman-section');
+      sec.classList.remove('hidden');
+      animateSection(simanContainer);
+
+      document.getElementById('endpoint-section').classList.add('hidden');
+    }
+
+    function selectSiman(chelek, siman, btn, updateUrl = true) {
+      state.siman = siman;
+      updateBreadcrumb();
+      if (updateUrl) history.pushState(null, '', `/tursa/${chelekToURL(chelek)}/${siman}`);
+      setSelected(document.getElementById('siman-container'), btn);
+
+      const epContainer = document.getElementById('endpoint-container');
+      epContainer.querySelectorAll('.button').forEach(b => {
+        b.onclick = () => openTursa(b.textContent.trim(), chelek, siman);
+      });
+
+      const sec = document.getElementById('endpoint-section');
+      sec.classList.remove('hidden');
+      animateSection(epContainer);
+    }
+
+    function openTursa(endpoint, chelek, siman) {
+      const info = samap[chelek];
+      if (!info) { alert('Unknown chelek.'); return; }
+      const pageId = info.ids[siman - 1];
+      if (!pageId) { alert('Page ID not found for this siman.'); return; }
+      const url = `https://beta.hebrewbooks.org/tursa.aspx?a=${info.key}_x${pageId}`;
+      window.open(url, '_blank');
+    }
+
+    // Restore selection state from URL on initial page load.
+    // When arriving via the 404.html redirect, the original path is in sessionStorage.
+    document.addEventListener('DOMContentLoaded', () => {
+      const redirectPath = sessionStorage.getItem('redirect');
+      if (redirectPath) {
+        sessionStorage.removeItem('redirect');
+        if (/^\/tursa(\/[A-Za-z_]+(\/\d+)?)?$/.test(redirectPath)) {
+          history.replaceState(null, '', redirectPath);
+        }
+      }
+      restoreFromPath(window.location.pathname);
+    });
+  </script>
+</body>
+</html>
