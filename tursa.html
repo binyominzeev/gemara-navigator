@@ -286,8 +286,10 @@
       <div class="section-divider"></div>
       <div class="section-label">Open in</div>
       <div id="endpoint-container">
-        <button class="button">Tur</button>
-        <button class="button">Shulchan Aruch</button>
+        <button class="button">Tur (HB)</button>
+        <button class="button">Shulchan Aruch (HB)</button>
+        <button class="button">Tur (Sefaria)</button>
+        <button class="button">Shulchan Aruch (Sefaria)</button>
       </div>
     </div>
 
@@ -424,12 +426,27 @@
       animateSection(epContainer);
     }
 
+    const sefariaChelekMap = {
+      'Orach Chaim':    'Orach_Chayim',
+      "Yoreh De'ah":    "Yoreh_De'ah",
+      "Even Ha'ezer":   'Even_HaEzer',
+      'Choshen Mishpat':'Choshen_Mishpat'
+    };
+
     function openTursa(endpoint, chelek, siman) {
-      const info = samap[chelek];
-      if (!info) { alert('Unknown chelek.'); return; }
-      const pageId = info.ids[siman - 1];
-      if (!pageId) { alert('Page ID not found for this siman.'); return; }
-      const url = `https://beta.hebrewbooks.org/tursa.aspx?a=${info.key}_x${pageId}`;
+      let url;
+      if (endpoint === 'Tur (Sefaria)' || endpoint === 'Shulchan Aruch (Sefaria)') {
+        const sc = sefariaChelekMap[chelek];
+        if (!sc) { alert('Unknown chelek.'); return; }
+        const work = endpoint === 'Tur (Sefaria)' ? 'Tur' : 'Shulchan_Arukh';
+        url = `https://www.sefaria.org/${work}%2C_${sc}.${siman}?lang=bi`;
+      } else {
+        const info = samap[chelek];
+        if (!info) { alert('Unknown chelek.'); return; }
+        const pageId = info.ids[siman - 1];
+        if (!pageId) { alert('Page ID not found for this siman.'); return; }
+        url = `https://beta.hebrewbooks.org/tursa.aspx?a=${info.key}_x${pageId}`;
+      }
       window.open(url, '_blank');
     }
 
