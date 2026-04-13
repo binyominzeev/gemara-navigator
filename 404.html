@@ -8,7 +8,7 @@
     // Paths under /tursa/* are redirected to /tursa; all others go to the app root /.
     var path = window.location.pathname;
     sessionStorage.setItem('redirect', path);
-    if (path.indexOf('/tursa') === 0) {
+    if (path.startsWith('/tursa')) {
       window.location.replace('/tursa');
     } else {
       window.location.replace('/');

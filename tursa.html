@@ -270,10 +270,10 @@
 
     <div class="section-label">Chelek</div>
     <div id="chelek-container" class="grid">
-      <button class="button" onclick="selectChelek('Orach Chaim', this)">Orach Chaim</button>
-      <button class="button" onclick="selectChelek('Yoreh De\'ah', this)">Yoreh De'ah</button>
-      <button class="button" onclick="selectChelek('Even Ha\'ezer', this)">Even Ha'ezer</button>
-      <button class="button" onclick="selectChelek('Choshen Mishpat', this)">Choshen Mishpat</button>
+      <button class="button" data-chelek="Orach Chaim" onclick="selectChelek(this.dataset.chelek, this)">Orach Chaim</button>
+      <button class="button" data-chelek="Yoreh De'ah" onclick="selectChelek(this.dataset.chelek, this)">Yoreh De'ah</button>
+      <button class="button" data-chelek="Even Ha'ezer" onclick="selectChelek(this.dataset.chelek, this)">Even Ha'ezer</button>
+      <button class="button" data-chelek="Choshen Mishpat" onclick="selectChelek(this.dataset.chelek, this)">Choshen Mishpat</button>
     </div>
 
     <div id="siman-section" class="hidden">
@@ -339,7 +339,7 @@
       if (!chelekName || !samap[chelekName]) return;
 
       const chelekBtn = Array.from(document.querySelectorAll('#chelek-container .button'))
-        .find(b => b.textContent === chelekName);
+        .find(b => b.dataset.chelek === chelekName);
       if (!chelekBtn) return;
       selectChelek(chelekName, chelekBtn, false);
 
