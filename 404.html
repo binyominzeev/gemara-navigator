@@ -5,11 +5,11 @@
   <title>Gemara Navigator</title>
   <script>
     // GitHub Pages SPA redirect: preserve the path so the app can restore state.
-    // Paths under /tursa/* are redirected to /tursa; all others go to the app root /.
+    // Paths under /tursa/* are redirected to /tursa.html; all others go to the app root /.
     var path = window.location.pathname;
     sessionStorage.setItem('redirect', path);
     if (path.startsWith('/tursa')) {
-      window.location.replace('/tursa');
+      window.location.replace('/tursa.html');
     } else {
       window.location.replace('/');
     }
