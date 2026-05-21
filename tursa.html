@@ -290,6 +290,7 @@
         <button class="button">Shulchan Aruch (HB)</button>
         <button class="button">Tur (Sefaria)</button>
         <button class="button">Shulchan Aruch (Sefaria)</button>
+          <button class="button">Aruch HaShulchan</button>
       </div>
     </div>
 
@@ -435,10 +436,14 @@
 
     function openTursa(endpoint, chelek, siman) {
       let url;
-      if (endpoint === 'Tur (Sefaria)' || endpoint === 'Shulchan Aruch (Sefaria)') {
+      if (endpoint === 'Tur (Sefaria)' || endpoint === 'Shulchan Aruch (Sefaria)' || endpoint === 'Aruch HaShulchan') {
         const sc = sefariaChelekMap[chelek];
         if (!sc) { alert('Unknown chelek.'); return; }
-        const work = endpoint === 'Tur (Sefaria)' ? 'Tur' : 'Shulchan_Arukh';
+        const work = endpoint === 'Tur (Sefaria)'
+          ? 'Tur'
+          : endpoint === 'Shulchan Aruch (Sefaria)'
+            ? 'Shulchan_Arukh'
+            : 'Arukh_HaShulchan';
         url = `https://www.sefaria.org/${work}%2C_${sc}.${siman}?lang=bi`;
       } else {
         const info = samap[chelek];
