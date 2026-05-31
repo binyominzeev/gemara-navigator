@@ -427,23 +427,37 @@
       animateSection(epContainer);
     }
 
-    const sefariaChelekMap = {
-      'Orach Chaim':    'Orach_Chayim',
-      "Yoreh De'ah":    "Yoreh_De'ah",
-      "Even Ha'ezer":   'Even_HaEzer',
-      'Choshen Mishpat':'Choshen_Mishpat'
+    const sefariaChelekMapByWork = {
+      Tur: {
+        'Orach Chaim': 'Orach_Chayim',
+        "Yoreh De'ah": "Yoreh_De'ah",
+        "Even Ha'ezer": 'Even_HaEzer',
+        'Choshen Mishpat': 'Choshen_Mishpat'
+      },
+      Shulchan_Arukh: {
+        'Orach Chaim': 'Orach_Chayim',
+        "Yoreh De'ah": "Yoreh_De'ah",
+        "Even Ha'ezer": 'Even_HaEzer',
+        'Choshen Mishpat': 'Choshen_Mishpat'
+      },
+      Arukh_HaShulchan: {
+        'Orach Chaim': 'Orach_Chaim',
+        "Yoreh De'ah": "Yoreh_De'ah",
+        "Even Ha'ezer": 'Even_HaEzer',
+        'Choshen Mishpat': 'Choshen_Mishpat'
+      }
     };
 
     function openTursa(endpoint, chelek, siman) {
       let url;
       if (endpoint === 'Tur (Sefaria)' || endpoint === 'Shulchan Aruch (Sefaria)' || endpoint === 'Aruch HaShulchan') {
-        const sc = sefariaChelekMap[chelek];
-        if (!sc) { alert('Unknown chelek.'); return; }
         const work = endpoint === 'Tur (Sefaria)'
           ? 'Tur'
           : endpoint === 'Shulchan Aruch (Sefaria)'
             ? 'Shulchan_Arukh'
             : 'Arukh_HaShulchan';
+        const sc = sefariaChelekMapByWork[work]?.[chelek];
+        if (!sc) { alert('Unknown chelek.'); return; }
         url = `https://www.sefaria.org/${work}%2C_${sc}.${siman}?lang=bi`;
       } else {
         const info = samap[chelek];
