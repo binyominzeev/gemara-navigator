@@ -32,8 +32,10 @@ Browse **Tur & Shulchan Aruch** by Chelek → Siman and open it in:
 | **Shulchan Aruch (HB)** | Shulchan Aruch on [HebrewBooks](https://beta.hebrewbooks.org) — scanned pages |
 | **Tur (Sefaria)** | Tur on [Sefaria](https://www.sefaria.org) |
 | **Shulchan Aruch (Sefaria)** | Shulchan Aruch on [Sefaria](https://www.sefaria.org) |
+| **Mishna Berura** | Available for Orach Chaim only on [mb.myshiurim.com](https://mb.myshiurim.com) |
 
 All four Chelakhim are supported: Orach Chaim (697 simanim), Yoreh De'ah (403), Even Ha'ezer (178), Choshen Mishpat (427).
+The Mishna Berura button appears only when browsing Orach Chaim.
 
 ---
 

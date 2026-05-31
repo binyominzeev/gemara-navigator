@@ -285,13 +285,7 @@
     <div id="endpoint-section" class="hidden">
       <div class="section-divider"></div>
       <div class="section-label">Open in</div>
-      <div id="endpoint-container">
-        <button class="button">Tur (HB)</button>
-        <button class="button">Shulchan Aruch (HB)</button>
-        <button class="button">Tur (Sefaria)</button>
-        <button class="button">Shulchan Aruch (Sefaria)</button>
-          <button class="button">Aruch HaShulchan</button>
-      </div>
+      <div id="endpoint-container"></div>
     </div>
 
     <footer>
@@ -310,6 +304,13 @@
 
     // State
     let state = { chelek: null, siman: null };
+    const baseEndpoints = [
+      'Tur (HB)',
+      'Shulchan Aruch (HB)',
+      'Tur (Sefaria)',
+      'Shulchan Aruch (Sefaria)',
+      'Aruch HaShulchan'
+    ];
 
     // --- URL routing helpers ---
 
@@ -386,6 +387,25 @@
       clickedBtn.classList.add('selected');
     }
 
+    function renderEndpointButtons(chelek) {
+      const epContainer = document.getElementById('endpoint-container');
+      const endpoints = [...baseEndpoints];
+
+      if (chelek === 'Orach Chaim') {
+        endpoints.push('Mishna Berura');
+      }
+
+      epContainer.innerHTML = '';
+      endpoints.forEach(endpoint => {
+        const b = document.createElement('button');
+        b.className = 'button';
+        b.textContent = endpoint;
+        epContainer.appendChild(b);
+      });
+
+      return epContainer;
+    }
+
     function selectChelek(chelek, btn, updateUrl = true) {
       state = { chelek, siman: null };
       updateBreadcrumb();
@@ -408,6 +428,7 @@
       sec.classList.remove('hidden');
       animateSection(simanContainer);
 
+      renderEndpointButtons(chelek);
       document.getElementById('endpoint-section').classList.add('hidden');
     }
 
@@ -417,7 +438,7 @@
       if (updateUrl) history.pushState(null, '', `/tursa/${chelekToURL(chelek)}/${siman}`);
       setSelected(document.getElementById('siman-container'), btn);
 
-      const epContainer = document.getElementById('endpoint-container');
+      const epContainer = renderEndpointButtons(chelek);
       epContainer.querySelectorAll('.button').forEach(b => {
         b.onclick = () => openTursa(b.textContent.trim(), chelek, siman);
       });
@@ -450,7 +471,9 @@
 
     function openTursa(endpoint, chelek, siman) {
       let url;
-      if (endpoint === 'Tur (Sefaria)' || endpoint === 'Shulchan Aruch (Sefaria)' || endpoint === 'Aruch HaShulchan') {
+      if (endpoint === 'Mishna Berura') {
+        url = `https://mb.myshiurim.com/${siman}/1`;
+      } else if (endpoint === 'Tur (Sefaria)' || endpoint === 'Shulchan Aruch (Sefaria)' || endpoint === 'Aruch HaShulchan') {
         const work = endpoint === 'Tur (Sefaria)'
           ? 'Tur'
           : endpoint === 'Shulchan Aruch (Sefaria)'
