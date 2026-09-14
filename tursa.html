@@ -120,8 +120,9 @@
       gap: 8px;
     }
 
-    /* === CHELEK BUTTONS — pill style, prominent === */
-    #chelek-container .button {
+    /* === CHELEK AND VOLUME BUTTONS — pill style, prominent === */
+    #chelek-container .button,
+    #kotet-container .button {
       font-family: 'DM Serif Display', serif;
       font-size: 15px;
       font-weight: 400;
@@ -136,14 +137,16 @@
       white-space: nowrap;
     }
 
-    #chelek-container .button:hover {
+    #chelek-container .button:hover,
+    #kotet-container .button:hover {
       border-color: var(--accent);
       color: var(--accent);
       background: var(--accent-light);
       transform: translateY(-1px);
     }
 
-    #chelek-container .button.selected {
+    #chelek-container .button.selected,
+    #kotet-container .button.selected {
       background: var(--accent);
       color: #fff;
       border-color: var(--accent);
@@ -311,7 +314,7 @@
 
     <div id="kotet-section" class="hidden">
       <div class="section-divider"></div>
-      <div class="section-label">Kötet (Mishna Berura)</div>
+      <div class="section-label">Volume (Mishna Berura)</div>
       <div id="kotet-container" class="grid"></div>
     </div>
 
@@ -344,12 +347,12 @@
     };
 
     const mishnaBeruraVolumes = [
-      { label: 'I. kötet',   from: 1,   to: 127 },
-      { label: 'II. kötet',  from: 128, to: 241 },
-      { label: 'III. kötet', from: 242, to: 344 },
-      { label: 'IV. kötet',  from: 345, to: 428 },
-      { label: 'V. kötet',   from: 429, to: 529 },
-      { label: 'VI. kötet',  from: 530, to: 697 }
+      { label: 'Volume I',   from: 1,   to: 127 },
+      { label: 'Volume II',  from: 128, to: 241 },
+      { label: 'Volume III', from: 242, to: 344 },
+      { label: 'Volume IV',  from: 345, to: 428 },
+      { label: 'Volume V',   from: 429, to: 529 },
+      { label: 'Volume VI',  from: 530, to: 697 }
     ];
 
     // State
@@ -494,7 +497,7 @@
       mishnaBeruraVolumes.forEach((vol, index) => {
         const b = document.createElement('button');
         b.className = 'button';
-        b.textContent = vol.label;
+        b.textContent = `${vol.label}: Simanim ${vol.from}-${vol.to}`;
         b.onclick = () => selectKotet(chelek, index, b);
         kotetContainer.appendChild(b);
       });
