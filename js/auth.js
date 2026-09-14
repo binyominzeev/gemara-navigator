@@ -4,7 +4,26 @@
   const verifierKey = 'navigator.pkceVerifier';
   const returnPathKey = 'navigator.returnPath';
   let accessToken = sessionStorage.getItem(tokenKey);
+  let userName = sessionStorage.getItem('navigator.userName') || '';
   let historyKeys = new Set();
+
+  function decodeJwtPayload(token) {
+    try {
+      const payload = token.split('.')[1];
+      const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+      return JSON.parse(atob(normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=')));
+    } catch {
+      return {};
+    }
+  }
+
+  function getUserName(claims) {
+    return claims.name || claims.preferred_username || claims.email || claims.nickname || 'felhasználó';
+  }
+
+  if (accessToken && !userName) {
+    userName = getUserName(decodeJwtPayload(accessToken));
+  }
 
   function base64Url(bytes) {
     let binary = '';
@@ -74,7 +93,10 @@
     if (!response.ok) throw new Error('OIDC token exchange failed');
     const tokens = await response.json();
     accessToken = tokens.access_token;
+    const claims = decodeJwtPayload(tokens.id_token || accessToken);
+    userName = getUserName(claims);
     sessionStorage.setItem(tokenKey, accessToken);
+    sessionStorage.setItem('navigator.userName', userName);
     sessionStorage.removeItem(verifierKey);
     const returnPath = sessionStorage.getItem(returnPathKey) || window.location.pathname;
     sessionStorage.removeItem(returnPathKey);
@@ -125,8 +147,10 @@
 
   function logout(redirect = true) {
     accessToken = null;
+    userName = '';
     historyKeys = new Set();
     sessionStorage.removeItem(tokenKey);
+    sessionStorage.removeItem('navigator.userName');
     document.dispatchEvent(new CustomEvent('navigator-auth-updated'));
     if (redirect) window.location.reload();
   }
@@ -137,17 +161,21 @@
       await loadHistory();
     } catch (error) {
       console.error(error);
-      logout(false);
+      document.dispatchEvent(new CustomEvent('navigator-auth-error', { detail: error.message }));
     }
     document.dispatchEvent(new CustomEvent('navigator-auth-ready'));
   }
 
   window.NavigatorAuth = {
-    login,
+    login: () => login().catch(error => {
+      console.error(error);
+      document.dispatchEvent(new CustomEvent('navigator-auth-error', { detail: error.message }));
+    }),
     logout,
     hasVisited,
     loadHistory,
     recordVisit,
+    getUserName: () => userName,
     isAuthenticated: () => Boolean(accessToken)
   };
 

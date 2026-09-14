@@ -270,6 +270,12 @@
       margin-left: auto;
     }
 
+    #auth-status {
+      color: var(--ink-muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
     #auth-controls button {
       border: 1px solid var(--border);
       border-radius: var(--radius);
@@ -290,7 +296,7 @@
       <h1><a href="/tursa">Shulchan Aruch Navigator</a></h1>
       <span class="subtitle">Tur &amp; Shulchan Aruch</span>
       <a class="sibling-link" href="/">← Gemara Navigator</a>
-      <div id="auth-controls"><button id="login-button" type="button">Belépés</button></div>
+      <div id="auth-controls"><span id="auth-status"></span><button id="login-button" type="button">Belépés</button></div>
     </header>
 
     <div id="breadcrumb"></div>
@@ -525,8 +531,10 @@
 
     function updateAuthControls() {
       const button = document.getElementById('login-button');
+      const status = document.getElementById('auth-status');
       if (!button) return;
       const authenticated = window.NavigatorAuth?.isAuthenticated() === true;
+      if (status) status.textContent = authenticated ? `Üdv ${window.NavigatorAuth.getUserName()}!` : '';
       button.textContent = authenticated ? 'Kilépés' : 'Belépés';
       button.onclick = () => authenticated ? window.NavigatorAuth.logout() : window.NavigatorAuth.login();
     }
@@ -547,6 +555,10 @@
       });
       document.addEventListener('navigator-auth-updated', updateAuthControls);
       document.addEventListener('navigator-history-updated', refreshVisitedSimanButtons);
+      document.addEventListener('navigator-auth-error', event => {
+        const status = document.getElementById('auth-status');
+        if (status) status.textContent = `API hiba: ${event.detail}`;
+      });
       const redirectPath = sessionStorage.getItem('redirect');
       if (redirectPath) {
         sessionStorage.removeItem('redirect');
