@@ -86,16 +86,13 @@
     if (!code) return;
     const verifier = sessionStorage.getItem(verifierKey);
     if (!verifier || params.get('state') !== verifier) throw new Error('Invalid OIDC state');
-    const metadata = await discover();
-    const response = await fetch(metadata.token_endpoint, {
+    const response = await fetch(`${config.apiBaseUrl}/api/auth/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
-        grant_type: 'authorization_code',
-        client_id: config.oidcClientId,
         code,
+        code_verifier: verifier,
         redirect_uri: redirectUri(),
-        code_verifier: verifier
       })
     });
     const responseText = await response.text();

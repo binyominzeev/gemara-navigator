@@ -64,13 +64,21 @@ The API provides `GET /api/health`, authenticated `GET /api/history`, and authen
 
 ### Pocket ID setup
 
-Create a **public** OIDC client in Pocket ID with Authorization Code + PKCE enabled. A browser application cannot safely keep a client secret, so no client secret is used by this implementation.
+Create an OIDC client in Pocket ID with Authorization Code + PKCE enabled. This implementation uses the client secret only on the backend; it is never included in the frontend.
 
 Use this as the Feedback URL / Redirect URI:
 
 - `https://gemara.myshiurim.com/`
 
-Set the generated client ID in `js/config.js` as `oidcClientId`. Leave `apiBaseUrl` empty because the API is served under the same `gemara.myshiurim.com` origin. The issuer is already configured as `https://auth.binjomin.hu`.
+Set the client ID in `js/config.js` as `oidcClientId`, and set the same client ID and secret in the server `.env`:
+
+```env
+OIDC_CLIENT_ID=...
+OIDC_CLIENT_SECRET=...
+OIDC_REDIRECT_URI=https://gemara.myshiurim.com/
+```
+
+The frontend uses `apiBaseUrl=https://api.gemara.myshiurim.com`. The issuer is already configured as `https://auth.binjomin.hu`.
 
 The history entry is created when a user opens an external resource, not merely when selecting a Daf or Siman.
 

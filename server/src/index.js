@@ -18,6 +18,7 @@ app.use(cors({
   allowedHeaders: ['Authorization', 'Content-Type']
 }));
 app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: false, limit: '10kb' }));
 app.use('/api', routes);
 
 app.use((error, req, res, next) => {
