@@ -309,6 +309,12 @@
       <button class="button" data-chelek="Choshen Mishpat" onclick="selectChelek(this.dataset.chelek, this)">Choshen Mishpat</button>
     </div>
 
+    <div id="kotet-section" class="hidden">
+      <div class="section-divider"></div>
+      <div class="section-label">Kötet (Mishna Berura)</div>
+      <div id="kotet-container" class="grid"></div>
+    </div>
+
     <div id="siman-section" class="hidden">
       <div class="section-divider"></div>
       <div class="section-label">Siman</div>
@@ -337,8 +343,17 @@
       'Choshen Mishpat':{ key: 'cm', count: 427, ids: [8697,8701,8702,8705,8708,8709,8709,8713,8715,8718,8719,8720,8724,8725,8729,8731,8732,8737,8739,8740,8742,8743,8748,8750,8752,8776,8777,8778,8787,8788,8795,8797,8798,8803,8813,8816,8822,8830,8833,8846,8848,8854,8861,8869,8873,8881,8903,8906,8908,8916,8918,8921,8924,8924,8927,8928,8940,8941,8947,8948,8958,8963,8969,8971,8973,8989,9019,9023,9025,9032,9037,9047,9085,9096,9445,9463,9465,9472,9476,9483,9484,9504,9517,9519,9521,9528,9538,9557,9572,9578,9584,9593,9598,9603,9605,9613,9617,9624,9626,9630,9631,9634,9635,9641,9648,9651,9652,9657,9666,9668,9672,9677,9680,9682,9683,9696,9697,9700,9701,9704,9706,9714,9720,9726,9726,9732,9746,9747,9750,9757,9760,9763,10292,10295,10297,10297,10298,10299,10302,10303,10308,10311,10312,10313,10314,10315,10324,10326,10327,10334,10338,10338,10339,10344,10353,10364,10369,10373,10376,10377,10378,10379,10381,10389,10391,10391,10392,10392,10393,10393,10394,10399,10401,10402,10403,10416,10433,10435,10436,10436,10436,10437,10442,10447,10448,10452,10453,10453,10455,10456,10462,10463,10467,10468,10471,10475,10475,10478,10481,10484,10489,10490,10493,10497,10500,10505,10506,10517,10519,10526,10528,10530,10534,10535,10538,10540,10543,10544,10547,10548,10550,10551,10554,10556,10557,10558,10560,10570,10572,10572,10574,10577,10584,10585,10586,10591,10594,10595,10596,10597,11105,11110,11112,11119,11121,11124,11127,11129,11134,11135,11144,11145,11147,11159,11159,11166,11167,11169,11170,11173,11179,11180,11184,11184,11187,11188,11189,11193,11194,11196,11197,11197,11199,11201,11201,11206,11207,11209,11214,11216,11218,11223,11224,11225,11226,11229,11230,11231,11232,11232,11238,11248,11256,11257,11259,11262,11264,11268,11269,11269,11270,11272,11273,11275,11276,11278,11283,11285,11286,11287,11289,11291,11296,11297,11298,11299,11301,11304,11304,11305,11306,11308,11309,11309,11309,11310,11310,11310,11310,11310,11311,11312,11315,11324,11325,11327,11327,11329,11330,11332,11335,11337,11338,11338,11340,11341,11344,11344,11347,11348,11349,11350,11350,11353,11355,11356,11359,11360,11362,11363,11365,11367,11368,11372,11373,11374,11375,11377,11378,11380,11381,11381,11382,11383,11383,11384,11385,11385,11386,11386,11387,11388,11390,11391,11391,11391,11399,11399,11407,11409,11411,11413,11413,11413,11414,11414,11415,11416,11416,11417,11419,11420,11421,11421,11421,11422,11423,11424,11424,11424,11428,11428,11429,11429,11430,11430,11430,11431,11433,11435,11439,11441,11441,11441,11443,11445,11445] }
     };
 
+    const mishnaBeruraVolumes = [
+      { label: 'I. kötet',   from: 1,   to: 127 },
+      { label: 'II. kötet',  from: 128, to: 241 },
+      { label: 'III. kötet', from: 242, to: 344 },
+      { label: 'IV. kötet',  from: 345, to: 428 },
+      { label: 'V. kötet',   from: 429, to: 529 },
+      { label: 'VI. kötet',  from: 530, to: 697 }
+    ];
+
     // State
-    let state = { chelek: null, siman: null };
+    let state = { chelek: null, kotet: null, siman: null };
     const baseEndpoints = [
       'Tur (HB)',
       'Shulchan Aruch (HB)',
@@ -382,7 +397,20 @@
       if (!chelekBtn) return;
       selectChelek(chelekName, chelekBtn, false);
 
-      if (parts[1]) {
+      if (chelekName === 'Orach Chaim') {
+        const kotetIndex = parseInt(parts[1], 10);
+        if (!isNaN(kotetIndex) && mishnaBeruraVolumes[kotetIndex - 1]) {
+          const kotetBtn = Array.from(document.querySelectorAll('#kotet-container .button'))[kotetIndex - 1];
+          if (kotetBtn) selectKotet(chelekName, kotetIndex - 1, kotetBtn, false);
+
+          const siman = parseInt(parts[2], 10);
+          if (!isNaN(siman) && siman >= 1 && siman <= samap[chelekName].count) {
+            const simanBtn = Array.from(document.querySelectorAll('#siman-container .button'))
+              .find(b => parseInt(b.textContent, 10) === siman);
+            if (simanBtn) selectSiman(chelekName, siman, simanBtn, false);
+          }
+        }
+      } else if (parts[1]) {
         const siman = parseInt(parts[1], 10);
         if (!isNaN(siman) && siman >= 1 && siman <= samap[chelekName].count) {
           const simanBtn = Array.from(document.querySelectorAll('#siman-container .button'))
@@ -393,8 +421,9 @@
     }
 
     window.addEventListener('popstate', () => {
-      state = { chelek: null, siman: null };
+      state = { chelek: null, kotet: null, siman: null };
       document.querySelectorAll('#chelek-container .button').forEach(b => b.classList.remove('selected'));
+      document.getElementById('kotet-section').classList.add('hidden');
       document.getElementById('siman-section').classList.add('hidden');
       document.getElementById('endpoint-section').classList.add('hidden');
       document.getElementById('breadcrumb').innerHTML = '';
@@ -407,6 +436,10 @@
       const bc = document.getElementById('breadcrumb');
       const parts = [];
       if (state.chelek) parts.push(`<span>${state.chelek}</span>`);
+      if (state.kotet !== null && state.kotet !== undefined) {
+        parts.push('<span class="sep">›</span>');
+        parts.push(`<span>${mishnaBeruraVolumes[state.kotet].label}</span>`);
+      }
       if (state.siman) { parts.push('<span class="sep">›</span>'); parts.push(`<span>Siman ${state.siman}</span>`); }
       bc.innerHTML = parts.join(' ');
     }
@@ -441,17 +474,10 @@
       return epContainer;
     }
 
-    function selectChelek(chelek, btn, updateUrl = true) {
-      state = { chelek, siman: null };
-      updateBreadcrumb();
-      if (updateUrl) history.pushState(null, '', '/tursa');
-      setSelected(document.getElementById('chelek-container'), btn);
-
+    function populateSimanContainer(chelek, from, to) {
       const simanContainer = document.getElementById('siman-container');
       simanContainer.innerHTML = '';
-
-      const count = samap[chelek].count;
-      for (let i = 1; i <= count; i++) {
+      for (let i = from; i <= to; i++) {
         const b = document.createElement('button');
         b.className = 'button';
         b.textContent = `${i}`;
@@ -459,19 +485,71 @@
         b.onclick = () => selectSiman(chelek, i, b);
         simanContainer.appendChild(b);
       }
+      return simanContainer;
+    }
 
+    function renderKotetButtons(chelek) {
+      const kotetContainer = document.getElementById('kotet-container');
+      kotetContainer.innerHTML = '';
+      mishnaBeruraVolumes.forEach((vol, index) => {
+        const b = document.createElement('button');
+        b.className = 'button';
+        b.textContent = vol.label;
+        b.onclick = () => selectKotet(chelek, index, b);
+        kotetContainer.appendChild(b);
+      });
+      return kotetContainer;
+    }
+
+    function selectChelek(chelek, btn, updateUrl = true) {
+      state = { chelek, kotet: null, siman: null };
+      updateBreadcrumb();
+      if (updateUrl) history.pushState(null, '', '/tursa');
+      setSelected(document.getElementById('chelek-container'), btn);
+
+      document.getElementById('siman-section').classList.add('hidden');
+      document.getElementById('endpoint-section').classList.add('hidden');
+
+      if (chelek === 'Orach Chaim') {
+        const kotetContainer = renderKotetButtons(chelek);
+        document.getElementById('kotet-section').classList.remove('hidden');
+        animateSection(kotetContainer);
+      } else {
+        document.getElementById('kotet-section').classList.add('hidden');
+        const simanContainer = populateSimanContainer(chelek, 1, samap[chelek].count);
+        const sec = document.getElementById('siman-section');
+        sec.classList.remove('hidden');
+        animateSection(simanContainer);
+      }
+
+      renderEndpointButtons(chelek);
+    }
+
+    function selectKotet(chelek, volumeIndex, btn, updateUrl = true) {
+      const vol = mishnaBeruraVolumes[volumeIndex];
+      state.kotet = volumeIndex;
+      state.siman = null;
+      updateBreadcrumb();
+      if (updateUrl) history.pushState(null, '', `/tursa/${chelekToURL(chelek)}/${volumeIndex + 1}`);
+      setSelected(document.getElementById('kotet-container'), btn);
+
+      const simanContainer = populateSimanContainer(chelek, vol.from, vol.to);
       const sec = document.getElementById('siman-section');
       sec.classList.remove('hidden');
       animateSection(simanContainer);
 
-      renderEndpointButtons(chelek);
       document.getElementById('endpoint-section').classList.add('hidden');
     }
 
     function selectSiman(chelek, siman, btn, updateUrl = true) {
       state.siman = siman;
       updateBreadcrumb();
-      if (updateUrl) history.pushState(null, '', `/tursa/${chelekToURL(chelek)}/${siman}`);
+      if (updateUrl) {
+        const path = (state.kotet !== null && state.kotet !== undefined)
+          ? `/tursa/${chelekToURL(chelek)}/${state.kotet + 1}/${siman}`
+          : `/tursa/${chelekToURL(chelek)}/${siman}`;
+        history.pushState(null, '', path);
+      }
       setSelected(document.getElementById('siman-container'), btn);
 
       const epContainer = renderEndpointButtons(chelek);
@@ -562,7 +640,7 @@
       const redirectPath = sessionStorage.getItem('redirect');
       if (redirectPath) {
         sessionStorage.removeItem('redirect');
-        if (/^\/tursa(\/[A-Za-z_]+(\/\d+)?)?$/.test(redirectPath)) {
+        if (/^\/tursa(\/[A-Za-z_]+(\/\d+)?(\/\d+)?)?$/.test(redirectPath)) {
           history.replaceState(null, '', redirectPath);
         }
       }
