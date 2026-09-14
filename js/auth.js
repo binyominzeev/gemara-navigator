@@ -59,7 +59,11 @@
     const verifier = createVerifier();
     const challenge = await createCodeChallenge(verifier);
     sessionStorage.setItem(verifierKey, verifier);
-    sessionStorage.setItem(returnPathKey, `${window.location.pathname}${window.location.search}`);
+    const currentParams = new URLSearchParams(window.location.search);
+    const returnPath = currentParams.has('code') || currentParams.has('error')
+      ? window.location.pathname
+      : `${window.location.pathname}${window.location.search}`;
+    sessionStorage.setItem(returnPathKey, returnPath);
     const params = new URLSearchParams({
       response_type: 'code',
       client_id: config.oidcClientId,
@@ -74,6 +78,10 @@
 
   async function handleCallback() {
     const params = new URLSearchParams(window.location.search);
+    const callbackError = params.get('error');
+    if (callbackError) {
+      throw new Error(`OIDC authorization failed: ${callbackError}${params.get('error_description') ? ` (${params.get('error_description')})` : ''}`);
+    }
     const code = params.get('code');
     if (!code) return;
     const verifier = sessionStorage.getItem(verifierKey);
@@ -90,8 +98,14 @@
         code_verifier: verifier
       })
     });
-    if (!response.ok) throw new Error('OIDC token exchange failed');
-    const tokens = await response.json();
+    const responseText = await response.text();
+    if (!response.ok) {
+      let details = responseText;
+      try { details = JSON.stringify(JSON.parse(responseText)); } catch { /* Keep plain response text. */ }
+      throw new Error(`OIDC token exchange failed (${response.status}): ${details || 'empty response'}`);
+    }
+    const tokens = JSON.parse(responseText);
+    if (!tokens.access_token) throw new Error('OIDC token exchange returned no access token');
     accessToken = tokens.access_token;
     const claims = decodeJwtPayload(tokens.id_token || accessToken);
     userName = getUserName(claims);
