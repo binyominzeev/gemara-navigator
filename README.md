@@ -39,6 +39,43 @@ The Mishna Berura button appears only when browsing Orach Chaim.
 
 ---
 
+## User history
+
+Signed-in users can see which Dafim and Simanim they have already opened in an external source. History is stored by the API and is scoped to the authenticated Pocket ID user.
+
+The frontend remains hosted on GitHub Pages. The API is a separate Node.js service under `server/`, running directly on the production server under PM2 (Docker is not required).
+
+### API setup
+
+1. Copy `server/.env.example` to `server/.env` and set the production values. `CORS_ORIGIN` must contain the exact HTTPS frontend origin.
+2. Install and start the service:
+
+	```bash
+	cd server
+	npm ci
+	pm2 start ecosystem.config.cjs
+	pm2 save
+	```
+
+3. Put the service behind the existing reverse proxy. The Node process listens only on `127.0.0.1:4000`; expose it through an HTTPS API hostname such as `api.gemara.myshiurim.com`.
+4. Keep the SQLite database in the configured `DATABASE_PATH` outside the repository and include it in server backups.
+
+The API provides `GET /api/health`, authenticated `GET /api/history`, and authenticated `POST /api/history`. The latter accepts `navigator` (`gemara` or `tursa`), `work`, and a positive numeric `item`.
+
+### Pocket ID setup
+
+Create a **public** OIDC client in Pocket ID with Authorization Code + PKCE enabled. A browser application cannot safely keep a client secret, so no client secret is used by this implementation.
+
+Use this as the Feedback URL / Redirect URI:
+
+- `https://gemara.myshiurim.com/`
+
+Set the generated client ID in `js/config.js` as `oidcClientId`. Set `apiBaseUrl` there to the public API origin if the API is hosted on a separate hostname. The issuer is already configured as `https://auth.binjomin.hu`.
+
+The history entry is created when a user opens an external resource, not merely when selecting a Daf or Siman.
+
+---
+
 ## How It Works
 
 1. **Select** a Seder / Chelek (top level)

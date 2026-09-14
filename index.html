@@ -197,6 +197,12 @@
       font-weight: 500;
     }
 
+    #daf-container .button.visited:not(.selected) {
+      background: #f1ead7;
+      border-color: #c5a85b;
+      color: #6c5520;
+    }
+
     /* === INTERFACE BUTTONS — full-width action list === */
     #interface-container {
       display: grid;
@@ -262,6 +268,26 @@
       color: var(--accent-hover);
     }
 
+    #auth-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+    }
+
+    #auth-controls button {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 7px 11px;
+      background: var(--surface);
+      color: var(--accent);
+      cursor: pointer;
+      font: inherit;
+      font-size: 12px;
+    }
+
+    #auth-controls button:hover { background: var(--accent-light); }
+
     /* Footer */
     footer {
       margin-top: 52px;
@@ -292,6 +318,7 @@
       <h1><a href="/">Gemara Navigator</a></h1>
       <span class="subtitle">Talmud Bavli</span>
       <a class="sibling-link" href="/tursa">Shulchan Aruch Navigator →</a>
+      <div id="auth-controls"><button id="login-button" type="button">Belépés</button></div>
     </header>
 
     <div id="breadcrumb"></div>
@@ -336,6 +363,8 @@
     </footer>
   </div>
 
+  <script src="/js/config.js"></script>
+  <script src="/js/auth.js"></script>
   <script>
     const masechtot = {
       Zeraim: [{ title: 'Berachot', dapim: 64 }],
@@ -537,6 +566,7 @@
         const b = document.createElement('button');
         b.className = 'button';
         b.textContent = `${i}`;
+        if (window.NavigatorAuth?.hasVisited('gemara', maseches.title, i)) b.classList.add('visited');
         b.onclick = () => selectDaf(maseches.title, i, b);
         dafContainer.appendChild(b);
       }
@@ -610,12 +640,34 @@
         }
         default: alert('Invalid interface.'); return;
       }
+      window.NavigatorAuth?.recordVisit('gemara', maseches, daf);
       window.open(url, '_blank');
+    }
+
+    function updateAuthControls() {
+      const button = document.getElementById('login-button');
+      if (!button) return;
+      const authenticated = window.NavigatorAuth?.isAuthenticated() === true;
+      button.textContent = authenticated ? 'Kilépés' : 'Belépés';
+      button.onclick = () => authenticated ? window.NavigatorAuth.logout() : window.NavigatorAuth.login();
+    }
+
+    function refreshVisitedDafButtons() {
+      document.querySelectorAll('#daf-container .button').forEach(button => {
+        button.classList.toggle('visited', window.NavigatorAuth?.hasVisited('gemara', state.maseches, Number(button.textContent)) === true);
+      });
     }
 
     // Restore selection state from URL on initial page load.
     // When arriving via the 404.html redirect, the original path is in sessionStorage.
     document.addEventListener('DOMContentLoaded', () => {
+      updateAuthControls();
+      document.addEventListener('navigator-auth-ready', () => {
+        updateAuthControls();
+        refreshVisitedDafButtons();
+      });
+      document.addEventListener('navigator-auth-updated', updateAuthControls);
+      document.addEventListener('navigator-history-updated', refreshVisitedDafButtons);
       const redirectPath = sessionStorage.getItem('redirect');
       if (redirectPath) {
         sessionStorage.removeItem('redirect');
