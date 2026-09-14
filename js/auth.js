@@ -3,8 +3,8 @@
   const tokenKey = 'navigator.accessToken';
   const verifierKey = 'navigator.pkceVerifier';
   const returnPathKey = 'navigator.returnPath';
-  let accessToken = sessionStorage.getItem(tokenKey);
-  let userName = sessionStorage.getItem('navigator.userName') || '';
+  let accessToken = localStorage.getItem(tokenKey) || sessionStorage.getItem(tokenKey);
+  let userName = localStorage.getItem('navigator.userName') || sessionStorage.getItem('navigator.userName') || '';
   let historyKeys = new Set();
 
   function decodeJwtPayload(token) {
@@ -21,8 +21,16 @@
     return claims.name || claims.preferred_username || claims.email || claims.nickname || 'felhasználó';
   }
 
-  if (accessToken && !userName) {
-    userName = getUserName(decodeJwtPayload(accessToken));
+  if (accessToken) {
+    const claims = decodeJwtPayload(accessToken);
+    if (claims.exp && claims.exp * 1000 < Date.now()) {
+      accessToken = null;
+      userName = '';
+      localStorage.removeItem(tokenKey);
+      localStorage.removeItem('navigator.userName');
+    } else if (!userName) {
+      userName = getUserName(claims);
+    }
   }
 
   function base64Url(bytes) {
@@ -106,8 +114,10 @@
     accessToken = tokens.access_token;
     const claims = decodeJwtPayload(tokens.id_token || accessToken);
     userName = getUserName(claims);
-    sessionStorage.setItem(tokenKey, accessToken);
-    sessionStorage.setItem('navigator.userName', userName);
+    localStorage.setItem(tokenKey, accessToken);
+    localStorage.setItem('navigator.userName', userName);
+    sessionStorage.removeItem(tokenKey);
+    sessionStorage.removeItem('navigator.userName');
     sessionStorage.removeItem(verifierKey);
     const returnPath = sessionStorage.getItem(returnPathKey) || window.location.pathname;
     sessionStorage.removeItem(returnPathKey);
@@ -160,6 +170,8 @@
     accessToken = null;
     userName = '';
     historyKeys = new Set();
+    localStorage.removeItem(tokenKey);
+    localStorage.removeItem('navigator.userName');
     sessionStorage.removeItem(tokenKey);
     sessionStorage.removeItem('navigator.userName');
     document.dispatchEvent(new CustomEvent('navigator-auth-updated'));
