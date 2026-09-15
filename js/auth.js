@@ -1,11 +1,28 @@
 (() => {
   const config = window.NAVIGATOR_CONFIG;
   const tokenKey = 'navigator.accessToken';
+  const refreshTokenKey = 'navigator.refreshToken';
+  const userNameKey = 'navigator.userName';
   const verifierKey = 'navigator.pkceVerifier';
   const returnPathKey = 'navigator.returnPath';
+  const debugLogKey = 'navigator.authDebugLog';
   let accessToken = localStorage.getItem(tokenKey) || sessionStorage.getItem(tokenKey);
-  let userName = localStorage.getItem('navigator.userName') || sessionStorage.getItem('navigator.userName') || '';
+  let refreshToken = localStorage.getItem(refreshTokenKey);
+  let userName = localStorage.getItem(userNameKey) || sessionStorage.getItem(userNameKey) || '';
   let historyKeys = new Set();
+  let refreshTimer = null;
+
+  // Ring-buffer debug log (kept in localStorage) so auth issues can be
+  // diagnosed after the fact via window.NavigatorAuth.getDebugLog().
+  function logDebug(event, details) {
+    const entry = { time: new Date().toISOString(), event, ...(details || {}) };
+    console.debug(`[NavigatorAuth] ${entry.time} ${event}`, details || '');
+    try {
+      const log = JSON.parse(localStorage.getItem(debugLogKey) || '[]');
+      log.push(entry);
+      localStorage.setItem(debugLogKey, JSON.stringify(log.slice(-50)));
+    } catch { /* Storage may be unavailable; logging is best-effort. */ }
+  }
 
   function decodeJwtPayload(token) {
     try {
@@ -24,10 +41,9 @@
   if (accessToken) {
     const claims = decodeJwtPayload(accessToken);
     if (claims.exp && claims.exp * 1000 < Date.now()) {
+      logDebug('startup.access_token_expired', { exp: claims.exp });
       accessToken = null;
-      userName = '';
       localStorage.removeItem(tokenKey);
-      localStorage.removeItem('navigator.userName');
     } else if (!userName) {
       userName = getUserName(claims);
     }
@@ -76,11 +92,12 @@
       response_type: 'code',
       client_id: config.oidcClientId,
       redirect_uri: redirectUri(),
-      scope: 'openid profile email',
+      scope: 'openid profile email offline_access',
       state: verifier,
       code_challenge: challenge,
       code_challenge_method: 'S256'
     });
+    logDebug('login.redirect');
     window.location.assign(`${metadata.authorization_endpoint}?${params}`);
   }
 
@@ -111,20 +128,56 @@
     }
     const tokens = JSON.parse(responseText);
     if (!tokens.access_token) throw new Error('OIDC token exchange returned no access token');
-    accessToken = tokens.access_token;
-    const claims = decodeJwtPayload(tokens.id_token || accessToken);
-    userName = getUserName(claims);
-    localStorage.setItem(tokenKey, accessToken);
-    localStorage.setItem('navigator.userName', userName);
+    applyTokens(tokens, 'login');
     sessionStorage.removeItem(tokenKey);
-    sessionStorage.removeItem('navigator.userName');
+    sessionStorage.removeItem(userNameKey);
     sessionStorage.removeItem(verifierKey);
     const returnPath = sessionStorage.getItem(returnPathKey) || window.location.pathname;
     sessionStorage.removeItem(returnPathKey);
     window.history.replaceState(null, '', returnPath);
   }
 
-  async function api(path, options = {}) {
+  function applyTokens(tokens, source) {
+    accessToken = tokens.access_token;
+    if (tokens.refresh_token) refreshToken = tokens.refresh_token;
+    const claims = decodeJwtPayload(tokens.id_token || accessToken);
+    userName = getUserName(claims);
+    localStorage.setItem(tokenKey, accessToken);
+    localStorage.setItem(userNameKey, userName);
+    if (refreshToken) localStorage.setItem(refreshTokenKey, refreshToken);
+    logDebug(`${source}.tokens_applied`, { exp: claims.exp, hasRefreshToken: Boolean(refreshToken) });
+    scheduleRefresh(claims.exp);
+  }
+
+  function scheduleRefresh(exp) {
+    if (refreshTimer) clearTimeout(refreshTimer);
+    if (!exp || !refreshToken) return;
+    // Refresh 60s before expiry so the API never sees an expired token.
+    const delay = Math.max(exp * 1000 - Date.now() - 60000, 5000);
+    refreshTimer = setTimeout(() => { refreshAccessToken().catch(error => logDebug('refresh.scheduled_failed', { message: error.message })); }, delay);
+    logDebug('refresh.scheduled', { delayMs: delay });
+  }
+
+  async function refreshAccessToken() {
+    if (!refreshToken) throw new Error('No refresh token available');
+    logDebug('refresh.attempt');
+    const response = await fetch(`${config.apiBaseUrl}/api/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ refresh_token: refreshToken })
+    });
+    const responseText = await response.text();
+    if (!response.ok) {
+      logDebug('refresh.failed', { status: response.status, body: responseText.slice(0, 300) });
+      throw new Error(`Refresh failed (${response.status}): ${responseText}`);
+    }
+    const tokens = JSON.parse(responseText);
+    applyTokens(tokens, 'refresh');
+    document.dispatchEvent(new CustomEvent('navigator-auth-updated'));
+    return accessToken;
+  }
+
+  async function api(path, options = {}, retried = false) {
     if (!accessToken) return null;
     const response = await fetch(`${config.apiBaseUrl}${path}`, {
       ...options,
@@ -135,6 +188,15 @@
       }
     });
     if (response.status === 401) {
+      logDebug('api.unauthorized', { path, retried });
+      if (!retried && refreshToken) {
+        try {
+          await refreshAccessToken();
+          return api(path, options, true);
+        } catch (error) {
+          logDebug('api.refresh_after_401_failed', { message: error.message });
+        }
+      }
       logout(false);
       return null;
     }
@@ -167,13 +229,17 @@
   }
 
   function logout(redirect = true) {
+    logDebug('logout', { redirect });
     accessToken = null;
+    refreshToken = null;
     userName = '';
     historyKeys = new Set();
+    if (refreshTimer) clearTimeout(refreshTimer);
     localStorage.removeItem(tokenKey);
-    localStorage.removeItem('navigator.userName');
+    localStorage.removeItem(refreshTokenKey);
+    localStorage.removeItem(userNameKey);
     sessionStorage.removeItem(tokenKey);
-    sessionStorage.removeItem('navigator.userName');
+    sessionStorage.removeItem(userNameKey);
     document.dispatchEvent(new CustomEvent('navigator-auth-updated'));
     if (redirect) window.location.reload();
   }
@@ -181,9 +247,10 @@
   async function initialize() {
     try {
       await handleCallback();
+      if (accessToken) scheduleRefresh(decodeJwtPayload(accessToken).exp);
       await loadHistory();
     } catch (error) {
-      console.error(error);
+      logDebug('initialize.failed', { message: error.message });
       document.dispatchEvent(new CustomEvent('navigator-auth-error', { detail: error.message }));
     }
     document.dispatchEvent(new CustomEvent('navigator-auth-ready'));
@@ -191,13 +258,14 @@
 
   window.NavigatorAuth = {
     login: () => login().catch(error => {
-      console.error(error);
+      logDebug('login.failed', { message: error.message });
       document.dispatchEvent(new CustomEvent('navigator-auth-error', { detail: error.message }));
     }),
     logout,
     hasVisited,
     loadHistory,
     recordVisit,
+    getDebugLog: () => { try { return JSON.parse(localStorage.getItem(debugLogKey) || '[]'); } catch { return []; } },
     getUserName: () => userName,
     isAuthenticated: () => Boolean(accessToken)
   };

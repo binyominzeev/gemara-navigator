@@ -64,7 +64,7 @@ The API provides `GET /api/health`, authenticated `GET /api/history`, and authen
 
 ### Pocket ID setup
 
-Create an OIDC client in Pocket ID with Authorization Code + PKCE enabled. This implementation uses the client secret only on the backend; it is never included in the frontend.
+Create an OIDC client in Pocket ID with Authorization Code + PKCE enabled, and make sure the `offline_access` scope is allowed for the client (needed for silent token refresh; without it, users are forced to click "Belépés" again every time the ~1 hour access token expires). This implementation uses the client secret only on the backend; it is never included in the frontend.
 
 Use this as the Feedback URL / Redirect URI:
 
@@ -77,6 +77,11 @@ OIDC_CLIENT_ID=...
 OIDC_CLIENT_SECRET=...
 OIDC_REDIRECT_URI=https://gemara.myshiurim.com/
 ```
+
+### Auth debugging
+
+The API logs every `/api/auth/token` and `/api/auth/refresh` outcome (success/failure with status code) via `console.log`, which PM2 already persists to `~/.pm2/logs/gemara-navigator-api-out.log`. On the frontend, `window.NavigatorAuth.getDebugLog()` returns the last 50 auth lifecycle events (login, token exchange, scheduled refresh, 401s) from `localStorage`, useful for diagnosing session issues reported by users.
+
 
 The frontend uses `apiBaseUrl=https://api.gemara.myshiurim.com`. The issuer is already configured as `https://auth.binjomin.hu`.
 
