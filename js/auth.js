@@ -38,15 +38,10 @@
     return claims.name || claims.preferred_username || claims.email || claims.nickname || 'felhasználó';
   }
 
-  if (accessToken) {
-    const claims = decodeJwtPayload(accessToken);
-    if (claims.exp && claims.exp * 1000 < Date.now()) {
-      logDebug('startup.access_token_expired', { exp: claims.exp });
-      accessToken = null;
-      localStorage.removeItem(tokenKey);
-    } else if (!userName) {
-      userName = getUserName(claims);
-    }
+  // Only used to show the username immediately; expiry is handled in initialize()
+  // so an expired token can first try a silent refresh instead of forcing logout.
+  if (accessToken && !userName) {
+    userName = getUserName(decodeJwtPayload(accessToken));
   }
 
   function base64Url(bytes) {
@@ -177,6 +172,19 @@
     return accessToken;
   }
 
+  // Background tabs can have their setTimeout throttled or suspended, so also
+  // check on return-to-foreground instead of relying on the timer alone.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible' || !accessToken) return;
+    const claims = decodeJwtPayload(accessToken);
+    if (claims.exp && claims.exp * 1000 - Date.now() < 60000) {
+      refreshAccessToken().catch(error => {
+        logDebug('visibilitychange.refresh_failed', { message: error.message });
+        logout(false);
+      });
+    }
+  });
+
   async function api(path, options = {}, retried = false) {
     if (!accessToken) return null;
     const response = await fetch(`${config.apiBaseUrl}${path}`, {
@@ -247,7 +255,22 @@
   async function initialize() {
     try {
       await handleCallback();
-      if (accessToken) scheduleRefresh(decodeJwtPayload(accessToken).exp);
+      if (accessToken) {
+        const claims = decodeJwtPayload(accessToken);
+        const expiringSoon = !claims.exp || claims.exp * 1000 - Date.now() < 60000;
+        if (expiringSoon && refreshToken) {
+          logDebug('startup.silent_refresh', { exp: claims.exp });
+          await refreshAccessToken().catch(error => {
+            logDebug('startup.silent_refresh_failed', { message: error.message });
+            logout(false);
+          });
+        } else if (expiringSoon) {
+          logDebug('startup.access_token_expired_no_refresh_token', { exp: claims.exp });
+          logout(false);
+        } else {
+          scheduleRefresh(claims.exp);
+        }
+      }
       await loadHistory();
     } catch (error) {
       logDebug('initialize.failed', { message: error.message });
