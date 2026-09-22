@@ -4,7 +4,7 @@ import { requireAuth } from './auth.js';
 
 const router = Router();
 const validNavigators = new Set(['gemara', 'tursa']);
-const maxHistoryEntries = 500;
+const maxHistoryEntries = 697;
 
 // Structured auth logging: PM2 captures stdout/stderr into
 // ~/.pm2/logs/gemara-navigator-api-out.log / -error.log, so this
